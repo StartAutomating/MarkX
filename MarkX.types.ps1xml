@@ -48,17 +48,6 @@ $this |
 
 if (-not $this.'#XML') { return }
 
-$nodeNumber = 0        
-$this.'#XML' | 
-    Select-Xml //* | 
-    ForEach-Object -Process {
-        if ($nodeNumber) {
-            $_.Node.SetAttribute('data-node-number', $nodeNumber)
-        }
-        $nodeNumber++
-    }
-
-
 $tables = $this.'#XML' | Select-Xml //table
 if (-not $tables) { return }
 filter innerText {

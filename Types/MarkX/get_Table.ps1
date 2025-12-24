@@ -1,0 +1,1 @@
+$this.XML | Select-Xml -XPath '//table' | Select-Object -ExpandProperty Node

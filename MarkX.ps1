@@ -1,8 +1,13 @@
+@"
 
 # Hello World
 
 ## Greetings from MarkX!
 
+"@ | MarkX
+
+
+@'
 
 ### What Is MarkX?
 
@@ -16,6 +21,11 @@ This lets us query and manipulate markdown, giving us the best of both worlds.
 
 It's easy to write text, and an easy to read document tree.
 
+'@ | MarkX
+
+
+
+@'
 
 ### Installing and Importing
 
@@ -31,6 +41,10 @@ Once install, you can import it with `Import-Module`
 Import-Module MarkX
 ~~~
 
+'@ | markX
+
+
+@'
 
 ### Getting Started
 
@@ -44,14 +58,11 @@ Let's start simple, by making some markdown:
 When we run this, we should see two properties:  Markdown and XML.
 
 Whenever we change the Markdown, everything else is updated.
+'@ | MarkX
 
 
-### Getting Links
 
-Let's see how this can be useful, by getting some links.
-
-~~~PowerShell
-
+$gettingLinks = {
 $markXLinks =
 "* [My Website](https://MrPowerShell.com/)",
 "* [GitHub](https://github.com/StartAutomating)",
@@ -62,22 +73,27 @@ $markXLinks =
     ForEach-Object { 
         "* $($_)"
     }) -join [Environment]::NewLine
+}
 
+@"
+
+
+### Getting Links
+
+Let's see how this can be useful, by getting some links.
+
+~~~PowerShell
+$gettingLinks
 ~~~
 
 When we run this, we get:
 
-* https://MrPowerShell.com/
-* https://github.com/StartAutomating
-* https://bsky.app/profile/mrpowershell.com
+$(& $gettingLinks)
+
+"@ | MarkX
 
 
-### Getting Images
-
-Let's see how this can be fun, by getting some images.
-
-~~~PowerShell
-
+$gettingImages = {
 
 $markXImages =
 "* ![Mind Blown Stranger Things](https://media1.tenor.com/m/rReKAT-J3nsAAAAd/mind-blown-boom.gif)",
@@ -92,23 +108,27 @@ $markXImages.Images |
     }
 ) -join [Environment]::NewLine
 
+}
 
+
+@"
+
+### Getting Images
+
+Let's see how this can be fun, by getting some images.
+
+~~~PowerShell
+$gettingImages
 ~~~
 
 When we run this, we get:
 
-<ul><li><img src="https://media1.tenor.com/m/rReKAT-J3nsAAAAd/mind-blown-boom.gif" alt="Mind Blown Stranger Things" /></li><li><img src="https://media1.tenor.com/m/rD98-O3i1xYAAAAC/what-mind-blown.gif" alt="Mind Blown Big Mouth" /></li></ul>
+$(& $gettingImages)
 
-* [Mind Blown Stranger Things](https://media1.tenor.com/m/rReKAT-J3nsAAAAd/mind-blown-boom.gif)
-* [Mind Blown Big Mouth](https://media1.tenor.com/m/rD98-O3i1xYAAAAC/what-mind-blown.gif)
+"@ | MarkX
 
 
-### Making Tables 
-
-Let's make some tables
-
-~~~PowerShell
-
+$makingTables = {
 
 $timesTable = @(
     "#### TimesTable"
@@ -123,14 +143,28 @@ $timesTable = @(
 
 $timesTable
 
+}
 
+
+
+@"
+
+### Making Tables 
+
+Let's make some tables
+
+~~~PowerShell
+$makingTables
 ~~~
 
 When we run this, we get:
 
-<h4 id="timestable">TimesTable</h4><table><thead><tr><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th></tr></thead><tbody><tr><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td></tr><tr><td>2</td><td>4</td><td>6</td><td>8</td><td>10</td><td>12</td><td>14</td><td>16</td><td>18</td></tr><tr><td>3</td><td>6</td><td>9</td><td>12</td><td>15</td><td>18</td><td>21</td><td>24</td><td>27</td></tr><tr><td>4</td><td>8</td><td>12</td><td>16</td><td>20</td><td>24</td><td>28</td><td>32</td><td>36</td></tr><tr><td>5</td><td>10</td><td>15</td><td>20</td><td>25</td><td>30</td><td>35</td><td>40</td><td>45</td></tr><tr><td>6</td><td>12</td><td>18</td><td>24</td><td>30</td><td>36</td><td>42</td><td>48</td><td>54</td></tr><tr><td>7</td><td>14</td><td>21</td><td>28</td><td>35</td><td>42</td><td>49</td><td>56</td><td>63</td></tr><tr><td>8</td><td>16</td><td>24</td><td>32</td><td>40</td><td>48</td><td>56</td><td>64</td><td>72</td></tr><tr><td>9</td><td>18</td><td>27</td><td>36</td><td>45</td><td>54</td><td>63</td><td>72</td><td>81</td></tr></tbody></table>
+$(& $makingTables)
+
+"@ | MarkX
 
 
+$markx = @'
 
 ### Tables Become Data
 
@@ -149,8 +183,13 @@ And because the .NET framework includes a nifty in-memory database, we can turn 
 |-|-|-|
 |1|2|3|
 
-~~~PowerShell
+'@ | MarkX
 
+
+
+$markx
+
+$GetMarkdownTableData = {
 
 $markxTables = @'
 #### abc
@@ -173,11 +212,17 @@ $markxTables = @'
 $markxTables
 $markxTables.DB.Tables["abc"].Compute('sum(a)','') # | Should -Be 12    
 $markxTables.DB.Tables["def"].Compute('sum(d)','') # | Should -Be 10
+}
 
+
+@"
+~~~PowerShell
+$GetMarkdownTableData
 ~~~
 
 When we run this example, we get:
 
-<h4 id="abc">abc</h4><table><thead><tr><th>a</th><th>b</th><th>c</th></tr></thead><tbody><tr><td>1</td><td>2</td><td>3</td></tr><tr><td>4</td><td>5</td><td>6</td></tr><tr><td>7</td><td>8</td><td>9</td></tr></tbody></table><h4 id="def">def</h4><table><thead><tr><th>d</th><th>e</th><th>f</th></tr></thead><tbody><tr><td>1</td><td>2</td><td>3</td></tr><tr><td>2</td><td>4</td><td>6</td></tr><tr><td>3</td><td>6</td><td>9</td></tr><tr><td>4</td><td>8</td><td>12</td></tr></tbody></table>
- 12 10
+$(& $GetMarkdownTableData)
+
+"@ | MarkX
 

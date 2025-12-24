@@ -134,6 +134,16 @@ $this | Add-Member NoteProperty '#DataSet' $markdownData -Force
                     </GetScriptBlock>
       </ScriptProperty>
       <ScriptProperty>
+        <Name>Links</Name>
+        <GetScriptBlock>
+                        foreach ($aNode in $this.XML | Select-Xml //a) {
+    if ($aNode.Node.href) {
+        $aNode.Node
+    }
+}
+                    </GetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
         <Name>Markdown</Name>
         <GetScriptBlock>
                         return $this.'#Markdown'

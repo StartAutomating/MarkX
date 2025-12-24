@@ -177,6 +177,12 @@ $this.Sync()
                     </SetScriptBlock>
       </ScriptProperty>
       <ScriptProperty>
+        <Name>Table</Name>
+        <GetScriptBlock>
+                        $this.XML | Select-Xml -XPath '//table' | Select-Object -ExpandProperty Node
+                    </GetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
         <Name>XML</Name>
         <GetScriptBlock>
                         return $this.'#XMl'

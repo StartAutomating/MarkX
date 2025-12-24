@@ -128,6 +128,12 @@ $this | Add-Member NoteProperty '#DataSet' $markdownData -Force
                     </Script>
       </ScriptMethod>
       <ScriptProperty>
+        <Name>InnerText</Name>
+        <GetScriptBlock>
+                        $this.XML.XHTML.InnerText
+                    </GetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
         <Name>Markdown</Name>
         <GetScriptBlock>
                         return $this.'#Markdown'

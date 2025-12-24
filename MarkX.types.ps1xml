@@ -3,6 +3,30 @@
   <Type>
     <Name>MarkX</Name>
     <Members>
+      <MemberSet>
+        <Name>PSStandardMembers</Name>
+        <Members>
+          <PropertySet>
+            <Name>DefaultDisplayPropertySet</Name>
+            <ReferencedProperties>
+              <Name>Markdown</Name>
+              <Name>XML</Name>
+            </ReferencedProperties>
+          </PropertySet>
+        </Members>
+      </MemberSet>
+      <AliasProperty>
+        <Name>DB</Name>
+        <ReferencedMemberName>DataSet</ReferencedMemberName>
+      </AliasProperty>
+      <AliasProperty>
+        <Name>Link</Name>
+        <ReferencedMemberName>Links</ReferencedMemberName>
+      </AliasProperty>
+      <AliasProperty>
+        <Name>Tables</Name>
+        <ReferencedMemberName>Table</ReferencedMemberName>
+      </AliasProperty>
       <ScriptMethod>
         <Name>Sync</Name>
         <Script>
@@ -220,6 +244,11 @@ $this.Sync()
                         return $this.'#XMl'
                     </GetScriptBlock>
       </ScriptProperty>
+      <NoteProperty>
+        <Name>DefaultDisplay</Name>
+        <Value>Markdown
+XML</Value>
+      </NoteProperty>
     </Members>
   </Type>
 </Types>

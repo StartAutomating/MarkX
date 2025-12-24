@@ -158,6 +158,89 @@ $this | Add-Member NoteProperty '#DataSet' $markdownData -Force
 return ("$($this.XML.XHTML.InnerXML)" + [Environment]::NewLine)
                     </Script>
       </ScriptMethod>
+      <ScriptMethod>
+        <Name>ToTable</Name>
+        <Script>
+                        param(
+[PSObject[]]
+$Rows
+)
+
+$allInput = @($input)
+$allRows = @($allInput) + $(if ($Rows) {
+    $rows
+})
+
+$MarkdownLines = @()
+$IsFirst = $true
+foreach ($in in $Rows) {
+    $propertyList = @(
+        # we first need to get a list of properties.
+        if ($in -is [Collections.IDictionary]) 
+        {
+            foreach ($k in $in.Keys) { # take all keys from the dictionary                
+                $k
+            }                        
+        }
+        # Otherwise, walk over all properties on the object
+        else {
+            foreach ($psProp in $In.psobject.properties) {                                                
+                $psProp                        
+            }
+        }
+    )
+
+    # If we're rendering the first row of a table
+    if ($IsFirst) {
+        # Create the header
+        $markdownLines +=
+            '|' + (@(foreach ($prop in $propertyList) {
+                if ($prop -is [string]) {
+                    $prop
+                } else {
+                    $prop.Name
+                }
+            }) -replace ([Environment]::newline), '&lt;br/&gt;' -replace '\|', '\|' -join '|') + '|'
+        # Then create the alignment row.
+        $markdownLines +=
+            '|' + $(
+                $columnNumber =0 
+                @(
+                    foreach ($prop in $propertyList) {
+                        $colLength = 
+                            if ($prop -is [string]) {
+                                $prop.Length
+                            } else {
+                                $prop.Name.Length
+                            }
+                        
+                        "-" * $colLength
+                        
+                        
+                        $columnNumber++
+                    }
+                ) -replace ([Environment]::newline), '&lt;br/&gt;' -replace '\|', '\|' -join '|') + '|'                    
+        $IsFirst = $false
+    }
+    
+    # Now we create the row for this object.
+
+    $markdownLine = '|' + (
+        @(
+            foreach ($prop in $propertyList) {
+                if ($prop -is [string]) {
+                    $in.$prop
+                } else {
+                    $prop.Value 
+                }
+            }
+        ) -replace ([Environment]::newline), '&lt;br/&gt;' -replace '\|', '\|' -join '|') + '|'
+
+    $markdownLines += $markdownLine
+}
+$markdownLines
+                    </Script>
+      </ScriptMethod>
       <ScriptProperty>
         <Name>DataSet</Name>
         <GetScriptBlock>
@@ -204,18 +287,29 @@ return ("$($this.XML.XHTML.InnerXML)" + [Environment]::NewLine)
                     </GetScriptBlock>
         <SetScriptBlock>
                         param(
-[PSObject]$Markdown
+[PSObject[]]$Markdown
 )
 
-$allMarkdown = foreach ($md in $Markdown) {
-    if ($md -isnot [string]) {
+$currentRows = @()
+$allMarkdown = @(foreach ($md in $Markdown) {    
+    if ($md -isnot [string]) {        
         if ($md -is [ScriptBlock]) {
             $md = "&lt;pre&gt;&lt;code class='language-powershell'&gt;$(
                 [Web.HttpUtility]::HtmlEncode(
                     "$md"
                 )
             )&lt;/code&gt;&lt;pre&gt;"
-        }   
+        } 
+        if ($md -is [Collections.IDictionary] -or 
+            ($md.GetType -and -not $md.GetType().IsPrimitive))  {            
+            $currentRows += $md            
+            continue
+        }
+    }
+    
+    if ($currentRows) {    
+        $this.ToTable($currentRows)        
+        $currentRows = @()
     }
 
     if ($md -match '(?&gt;\.md|markdown)$' -and
@@ -230,6 +324,11 @@ $allMarkdown = foreach ($md in $Markdown) {
     }
 
     $md
+})
+
+if ($currentRows) {    
+    $allMarkdown += $this.ToTable($currentRows)
+    $currentRows = @()
 }
 
 $markdown = $allMarkdown -join [Environment]::NewLine

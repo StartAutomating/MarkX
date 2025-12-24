@@ -1,16 +1,27 @@
 param(
-[PSObject]$Markdown
+[PSObject[]]$Markdown
 )
 
-$allMarkdown = foreach ($md in $Markdown) {
-    if ($md -isnot [string]) {
+$currentRows = @()
+$allMarkdown = @(foreach ($md in $Markdown) {    
+    if ($md -isnot [string]) {        
         if ($md -is [ScriptBlock]) {
             $md = "<pre><code class='language-powershell'>$(
                 [Web.HttpUtility]::HtmlEncode(
                     "$md"
                 )
             )</code><pre>"
-        }   
+        } 
+        if ($md -is [Collections.IDictionary] -or 
+            ($md.GetType -and -not $md.GetType().IsPrimitive))  {            
+            $currentRows += $md            
+            continue
+        }
+    }
+    
+    if ($currentRows) {    
+        $this.ToTable($currentRows)        
+        $currentRows = @()
     }
 
     if ($md -match '(?>\.md|markdown)$' -and
@@ -25,6 +36,11 @@ $allMarkdown = foreach ($md in $Markdown) {
     }
 
     $md
+})
+
+if ($currentRows) {    
+    $allMarkdown += $this.ToTable($currentRows)
+    $currentRows = @()
 }
 
 $markdown = $allMarkdown -join [Environment]::NewLine

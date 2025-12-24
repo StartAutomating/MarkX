@@ -127,6 +127,49 @@ $this | Add-Member NoteProperty '#DataSet' $markdownData -Force
 
                     </Script>
       </ScriptMethod>
+      <ScriptProperty>
+        <Name>Markdown</Name>
+        <GetScriptBlock>
+                        return $this.'#Markdown'
+                    </GetScriptBlock>
+        <SetScriptBlock>
+                        param(
+[PSObject]$Markdown
+)
+
+$allMarkdown = foreach ($md in $Markdown) {
+    if ($md -isnot [string]) {
+        if ($md -is [ScriptBlock]) {
+            $md = "&lt;pre&gt;&lt;code class='language-powershell'&gt;$(
+                [Web.HttpUtility]::HtmlEncode(
+                    "$md"
+                )
+            )&lt;/code&gt;&lt;pre&gt;"
+        }   
+    }
+
+    if ($md -match '(?&gt;\.md|markdown)$' -and
+        (Test-Path $md -ErrorAction Ignore)
+    ) {
+        $md = Get-Content -Raw $md
+    }
+
+    $yamlheader = ''
+    if ($md -match '^---') {
+        $null, $yamlheader, $md = $in -split '---', 3
+    }
+
+    $md
+}
+
+$markdown = $allMarkdown -join [Environment]::NewLine
+
+$this | 
+    Add-Member NoteProperty '#Markdown' $Markdown -Force
+
+$this.Sync()
+                    </SetScriptBlock>
+      </ScriptProperty>
     </Members>
   </Type>
 </Types>

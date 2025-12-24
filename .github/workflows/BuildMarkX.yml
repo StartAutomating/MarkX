@@ -496,4 +496,7 @@ jobs:
         uses: actions/checkout@main
       - name: UseEZOut
         uses: StartAutomating/EZOut@master
+      - name: Run Action (on branch)
+        if: ${{github.ref_name != 'main'}}
+        uses: ./
 

@@ -170,6 +170,12 @@ $this |
 $this.Sync()
                     </SetScriptBlock>
       </ScriptProperty>
+      <ScriptProperty>
+        <Name>XML</Name>
+        <GetScriptBlock>
+                        return $this.'#XMl'
+                    </GetScriptBlock>
+      </ScriptProperty>
     </Members>
   </Type>
 </Types>

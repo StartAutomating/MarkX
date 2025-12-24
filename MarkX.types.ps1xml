@@ -128,6 +128,16 @@ $this | Add-Member NoteProperty '#DataSet' $markdownData -Force
                     </Script>
       </ScriptMethod>
       <ScriptProperty>
+        <Name>Images</Name>
+        <GetScriptBlock>
+                        foreach ($aNode in $this.XML | Select-Xml //img) {
+    if ($aNode.Node.src) {
+        $aNode.Node
+    }
+}
+                    </GetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
         <Name>InnerText</Name>
         <GetScriptBlock>
                         $this.XML.XHTML.InnerText

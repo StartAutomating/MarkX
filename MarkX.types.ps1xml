@@ -134,6 +134,12 @@ $this | Add-Member NoteProperty '#DataSet' $markdownData -Force
                     </Script>
       </ScriptMethod>
       <ScriptProperty>
+        <Name>DataSet</Name>
+        <GetScriptBlock>
+                        return $this.'#DataSet'
+                    </GetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
         <Name>Images</Name>
         <GetScriptBlock>
                         foreach ($aNode in $this.XML | Select-Xml //img) {

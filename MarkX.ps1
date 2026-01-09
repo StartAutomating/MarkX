@@ -232,7 +232,6 @@ $(& $GetMarkdownTableData)
 "@ | MarkX
 
 
-
 $lexiconMarkdown = @'
 
 
@@ -286,6 +285,28 @@ As you can see, we can take rich data within Markdown and process it into lexico
 
 $lexiconMarkdownExample | MarkX
 
+
+$selfHelp = {Get-Help Get-MarkX | MarkX}
+
+$markdownHelp = @"
+
+### Markdown Help
+
+PowerShell commands generally contain help.
+
+We can pipe Get-Help into MarkX to get help as markdown
+
+~~~PowerShell
+$selfHelp
+~~~
+
+When we run this, we get:
+
+"@
+
+. $selfHelp
+
+
 $InSummary = @"
 
 ## In Summary
@@ -293,7 +314,8 @@ $InSummary = @"
 MarkX is a simple and powerful tool.
 It allows us to turn many objects into Markdown, and turn Markdown into many objects.
 
-Please pay around with the module
+Please pay around and see what you can do.
 
-"@
+"@ 
 
+$InSummary | MarkX

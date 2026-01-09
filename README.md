@@ -252,3 +252,52 @@ Which gives us:
 ~~~
 
 As you can see, we can take rich data within Markdown and process it into lexicons (or anything else we might want)
+# Get-MarkX
+## Gets MarkX
+### Gets MarkX - Markdown as XML
+
+This allows us to query, extract, and customize markdown.
+
+'Hello World' In Markdown / MarkX
+~~~PowerShell
+'# Hello World' | MarkX
+~~~
+MarkX is aliased to Markdown
+'Hello World' as Markdown as XML
+~~~PowerShell
+'# Hello World' | Markdown | Select -Expand XML
+~~~
+We can generate tables by piping in objects
+~~~PowerShell
+@{n1=1;n2=2}, @{n1=2;n3=3} | MarkX
+~~~
+Make a TimesTable in MarkX
+~~~PowerShell
+@(
+    "#### TimesTable"
+    foreach ($rowN in 1..9) {
+        $row = [Ordered]@{}
+        foreach ($colN in 1..9) {
+            $row["$colN"] = $colN * $rowN
+        }
+        $row
+    }
+) | Get-MarkX
+~~~
+We can pipe a command into MarkX
+This will get the command help as Markdown
+~~~PowerShell
+Get-Command Get-MarkX | MarkX
+~~~
+We can pipe help into MarkX
+~~~PowerShell
+Get-Help Get-MarkX | MarkX
+~~~
+
+## In Summary
+
+MarkX is a simple and powerful tool.
+It allows us to turn many objects into Markdown, and turn Markdown into many objects.
+
+Please pay around and see what you can do.
+

@@ -26,7 +26,12 @@ $allMarkdown = @(:nextInput foreach ($md in $InputObject) {
 
         if ($md.pstypenames -match 'HelpInfo') {
             @(
-                "# $($md.Name)"
+                if ($md.Name -match '[\\/]') {
+                    "# $(@($md.Name -split '[\\/]')[-1] -replace '\.ps1')"
+                } else {
+                    "# $($md.Name)"
+                }
+                
                 if ($md.Synopsis) {
                     "## $($md.Synopsis)"
                 }                

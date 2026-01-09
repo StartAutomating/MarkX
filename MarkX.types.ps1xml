@@ -20,6 +20,10 @@
         <ReferencedMemberName>DataSet</ReferencedMemberName>
       </AliasProperty>
       <AliasProperty>
+        <Name>Heading</Name>
+        <ReferencedMemberName>Headings</ReferencedMemberName>
+      </AliasProperty>
+      <AliasProperty>
         <Name>Link</Name>
         <ReferencedMemberName>Links</ReferencedMemberName>
       </AliasProperty>
@@ -234,6 +238,23 @@ $markdownLines
         <Name>DataSet</Name>
         <GetScriptBlock>
                         return $this.'#DataSet'
+                    </GetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
+        <Name>Headings</Name>
+        <GetScriptBlock>
+                        &lt;#
+.SYNOPSIS
+    Gets Markdown headings
+.DESCRIPTION
+    Gets any heading elements in the markdown
+#&gt;
+$this.XML | 
+    Select-Xml -XPath //* |
+    Where-Object {
+        $_.Node.LocalName -match 'h[1-6]'
+    } |
+    Select-Object -ExpandProperty Node
                     </GetScriptBlock>
       </ScriptProperty>
       <ScriptProperty>

@@ -41,6 +41,7 @@ $allMarkdown = @(:nextInput foreach ($md in $InputObject) {
                 }
                 
                 $md.alertset.alert.text -join [Environment]::NewLine
+                
                 foreach ($example in $md.examples.example) {
                     $exampleNumber++
                     

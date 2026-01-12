@@ -1,8 +1,8 @@
 <#
 .SYNOPSIS
-    Gets code blocks
+    Gets code
 .DESCRIPTION
-    Gets code blocks within Markdown / MarkX
+    Gets code within Markdown / MarkX, grouped by language.
 .EXAMPLE
     "
     # Hello World in PowerShell

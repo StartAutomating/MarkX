@@ -20,6 +20,10 @@
         <ReferencedMemberName>DataSet</ReferencedMemberName>
       </AliasProperty>
       <AliasProperty>
+        <Name>Header</Name>
+        <ReferencedMemberName>YamlHeader</ReferencedMemberName>
+      </AliasProperty>
+      <AliasProperty>
         <Name>Heading</Name>
         <ReferencedMemberName>Headings</ReferencedMemberName>
       </AliasProperty>
@@ -605,6 +609,38 @@ $this.Input = $Markdown
         <GetScriptBlock>
                         return $this.'#XMl'
                     </GetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
+        <Name>YamlHeader</Name>
+        <GetScriptBlock>
+                        return $this.'#YamlHeader'
+                    </GetScriptBlock>
+        <SetScriptBlock>
+                        param($header)
+
+if ($header -is [string]) {
+    $this | Add-Member NoteProperty '#YamlHeader' $header -Force
+    return
+}
+
+$convertToYaml = $ExecutionContext.SessionState.InvokeCommand.GetCommand('ConvertTo-Yaml', 'Alias,Cmdlet,Function')
+if (-not $convertToYaml) {
+    Write-Warning "Cannot set yaml header without converter"
+    return
+}
+
+$convertParameters = @{}
+if ($convertToYaml.Parameters['Depth']) {
+    $convertParameters['Depth'] = $FormatEnumerationLimit
+}
+$toYaml = $header | &amp; $convertToYaml @convertParameters
+if ($toYaml -is [string]) {
+    $this | Add-Member NoteProperty '#YamlHeader' $toYaml -Force
+}
+
+
+
+                    </SetScriptBlock>
       </ScriptProperty>
       <NoteProperty>
         <Name>DefaultDisplay</Name>

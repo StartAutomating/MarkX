@@ -293,6 +293,12 @@ We can pipe help into MarkX
 ~~~PowerShell
 Get-Help Get-MarkX | MarkX
 ~~~
+We can get code from markdown
+~~~PowerShell
+Get-Help Get-MarkX | 
+    MarkX | 
+    Select-Object -ExpandProperty Code
+~~~
 
 ## In Summary
 

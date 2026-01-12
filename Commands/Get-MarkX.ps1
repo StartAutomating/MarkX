@@ -36,16 +36,17 @@ function Get-MarkX {
         # We can pipe help into MarkX
         Get-Help Get-MarkX | MarkX
     #>
-    [Alias('MarkX','Markdown','Get-Markdown')]
+    [Alias('MarkX','Markdown','Get-Markdown')]    
     param()
 
     $allInput = @($input) + $(if ($args) {
         $args
-    })    
+    })
     
-    New-Object PSObject -Property @{
-        PSTypeName = 'MarkX'
-        Input = $allInput
-        YamlHeader = $yamlheader
-    }    
+    
+    $markx = New-Object PSObject -Property @{
+        PSTypeName = 'MarkX'        
+    }
+    $markx.Input = $allInput    
+    $markx
 }

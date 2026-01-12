@@ -35,6 +35,11 @@ function Get-MarkX {
     .EXAMPLE
         # We can pipe help into MarkX
         Get-Help Get-MarkX | MarkX
+    .EXAMPLE
+        # We can get code from markdown
+        Get-Help Get-MarkX | 
+            MarkX | 
+            Select-Object -ExpandProperty Code
     #>
     [Alias('MarkX','Markdown','Get-Markdown')]    
     param()

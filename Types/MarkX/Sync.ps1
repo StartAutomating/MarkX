@@ -1,6 +1,14 @@
 $currentRows = @()
 $allMarkdown = @(:nextInput foreach ($md in $this.Input) {    
     if ($md -isnot [string]) {
+        # If the markdown was a file
+        if ($md -is [IO.FileInfo] -and 
+            # and it had the extension .md or markdown
+            $md.Extension -in '.md', '.markdown') {
+            $md = Get-Content -LiteralPath $md.Fullname -Raw 
+            $md
+            continue
+        }
         
         if ($md -is [Management.Automation.CommandInfo]) {
             $cmdHelp = if (
@@ -82,10 +90,13 @@ $allMarkdown = @(:nextInput foreach ($md in $this.Input) {
             continue nextInput
         } 
         if ($md -is [Collections.IDictionary] -or 
-            ($md.GetType -and -not $md.GetType().IsPrimitive))  {            
+            ($md.GetType -and 
+                (-not $md.GetType().IsPrimitive)
+            )  
+        ) {            
             $currentRows += $md            
             continue
-        }
+        }        
     }
     
     if ($currentRows) {    
@@ -115,6 +126,26 @@ if ($currentRows) {
     $currentRows = @()
 }
 
+$yamlHeaders = @()
+$allMarkdown = @(foreach ($md in $allMarkdown) {
+    if ($md -match '^---') {
+        $null, $yamlheader, $restOfMakdown = $md -split '---', 3
+        if ($yamlheader) {
+            $yamlHeaders+= $yamlheader            
+        }
+        $restOfMakdown
+    } else {
+        $md
+    }
+})
+
+if ($yamlHeaders) {
+    $yamlHeader = $yamlHeaders -join (
+        [Environment]::NewLine + '---' + [Environment]::NewLine
+    )
+    $this | Add-Member NoteProperty '#YamlHeader' $yamlHeader -Force
+}
+
 $markdown = $allMarkdown -join [Environment]::NewLine
 
 $this | 
@@ -139,7 +170,6 @@ $this |
 if (-not $this.'#XML') { return }
 
 $tables = $this.'#XML' | Select-Xml //table
-if (-not $tables) { return }
 filter innerText {
     $in = $_
     if ($in -is [string]) { "$in" }

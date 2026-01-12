@@ -20,10 +20,6 @@
         <ReferencedMemberName>DataSet</ReferencedMemberName>
       </AliasProperty>
       <AliasProperty>
-        <Name>Header</Name>
-        <ReferencedMemberName>YamlHeader</ReferencedMemberName>
-      </AliasProperty>
-      <AliasProperty>
         <Name>Heading</Name>
         <ReferencedMemberName>Headings</ReferencedMemberName>
       </AliasProperty>

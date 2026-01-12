@@ -102,6 +102,9 @@ $allMarkdown = @(:nextInput foreach ($md in $this.Input) {
     $yamlheader = ''
     if ($md -match '^---') {
         $null, $yamlheader, $md = $in -split '---', 3
+        if ($yamlheader) {
+            $this | Add-Member NoteProperty '#YamlHeader' $yamlheader -Force
+        }
     }
 
     $md

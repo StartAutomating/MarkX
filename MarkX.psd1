@@ -12,7 +12,7 @@
 RootModule = 'MarkX.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.1'
+ModuleVersion = '0.1.1'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -36,7 +36,7 @@ Description = 'MarkX - Markdown, XML, and PowerShell'
 TypesToProcess = @('MarkX.types.ps1xml')
 
 # Format files (.ps1xml) to be loaded when importing this module
-# FormatsToProcess = @()
+FormatsToProcess = @('MarkX.format.ps1xml')
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
 FunctionsToExport = 'Get-MarkX'
@@ -63,31 +63,22 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = @'
-## MarkX 0.1:
+## MarkX 0.1.1:
 
-* `Get-MarkX` ( #1, #4 )
-* Docs
-  * Sponsorship ( #20 )
-  * Security ( #19 )
-  * Contributing ( #18 )
-  * Code of conduct ( #17 )
-  * README (generated with MarkX) (#16)
-* Extended Types
-  * `MarkX.get_HTML` ( #14 )    
-  * `MarkX.ToString()` ( #12 )
-  * `MarkX.get_DataSet` ( #13 )
-  * `MarkX.get_Images` (#11)
-  * `MarkX.get_Links` (#10)
-  * `MarkX.get_Table` ( #9 )
-  * `MarkX.get_InnerText` ( #8 )
-  * `MarkX.get_XML` ( #7 )
-  * `MarkX.get/set_Markdown` ( #6 )
-  * `MarkX.Sync` ( #5 )
-  * `MarkX.ToTable` ( #22 )
-* MarkX build ( #2, #3 )
-* MarkX Action ( #21 )
-* MarkX Tests ( #15 )
+* MarkX Help (#26)
+* MarkX now accepts commands / help (#27)
+* MarkX.Headings gets heading elements (#29)
+* MarkX.Lexicon gets lexicons in Markdown (#25)
+* MarkX.YamlHeader support (#32, #33)
+* Allowing piped markdown file input (#34)
+* MarkX.Code gets code within markdown (#30)
+* MarkX.CodeBlock gets code blocks within markdown (#31)
+* MarkX.ToString can now stringify any property (#35)
+* MarkX formatting (#36)
 
+---
+
+Additional release notes in [CHANGELOG](https://github.com/StartAutomating/MarkX/blob/main/CHANGELOG.md)
 '@
 
         # Prerelease string of this module

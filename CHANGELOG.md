@@ -1,3 +1,18 @@
+## MarkX 0.1.1:
+
+* MarkX Help (#26)
+* MarkX now accepts commands / help (#27)
+* MarkX.Headings gets heading elements (#29)
+* MarkX.Lexicon gets lexicons in Markdown (#25)
+* MarkX.YamlHeader support (#32, #33)
+* Allowing piped markdown file input (#34)
+* MarkX.Code gets code within markdown (#30)
+* MarkX.CodeBlock gets code blocks within markdown (#31)
+* MarkX.ToString can now stringify any property (#35)
+* MarkX formatting (#36)
+
+---
+
 ## MarkX 0.1:
 
 * `Get-MarkX` ( #1, #4 )

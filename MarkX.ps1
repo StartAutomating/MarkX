@@ -6,6 +6,11 @@
 
 "@ | MarkX
 
+@"
+
+[![MarkX PowerShell Gallery](https://img.shields.io/powershellgallery/dt/MarkX)](https://www.powershellgallery.com/packages/MarkX/)
+
+"@ | MarkX
 
 @'
 
@@ -226,3 +231,91 @@ $(& $GetMarkdownTableData)
 
 "@ | MarkX
 
+
+$lexiconMarkdown = @'
+
+
+### Markdown Lexicons
+
+Since we can extra tables and data Markdown, we can also get any data of a particular known shape.
+
+The first special shape MarkX supports is an [at protocol lexicon](https://atproto.com/guides/lexicon)
+
+MarkX current supports lexicon type definitions.  It will support query and procedure definitions in the future.
+
+A type definition consists of a namespace identifier, a description, and a series of properties.
+
+#### com.example.happy.birthday
+> An example lexicon to record birthday messages
+
+|Property|Type|Description|
+|-|-|-|
+|`$type`      | `[string]`   | The type of the object.  Must be `com.example.happy.birthday` |
+|**`message`**| `[string]`   | A birthday message |
+|`forUri`     | `[uri]`      | A link |
+|`birthday`   | `[datetime]` | The birthday |
+|`createdAt`  | `[datetime]` | The time the record was created |
+
+'@ | MarkX
+
+$lexiconMarkdown
+
+
+$lexiconJson = $lexiconMarkdown.Lexicon | ConvertTo-Json -Depth 5
+
+$lexiconMarkdownExample = @'
+
+
+To extract out a lexicon from the text above, we can:
+
+~~~PowerShell
+$lexiconMarkdown.Lexicon | ConvertTo-Json -Depth 5
+~~~
+
+Which gives us:
+
+'@ + @"
+
+~~~json
+$lexiconJson
+~~~
+
+As you can see, we can take rich data within Markdown and process it into lexicons (or anything else we might want)
+"@
+
+$lexiconMarkdownExample | MarkX
+
+
+$selfHelp = {Get-Help Get-MarkX | MarkX}
+
+$markdownHelp = @"
+
+### Markdown Help
+
+PowerShell commands generally contain help.
+
+We can pipe Get-Help into MarkX to get help as markdown
+
+~~~PowerShell
+$selfHelp
+~~~
+
+When we run this, we get:
+
+"@
+
+. $selfHelp
+
+
+$InSummary = @"
+
+## In Summary
+
+MarkX is a simple and powerful tool.
+It allows us to turn many objects into Markdown, and turn Markdown into many objects.
+
+Please pay around and see what you can do.
+
+"@ 
+
+$InSummary | MarkX

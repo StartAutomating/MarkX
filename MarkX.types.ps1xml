@@ -20,6 +20,10 @@
         <ReferencedMemberName>DataSet</ReferencedMemberName>
       </AliasProperty>
       <AliasProperty>
+        <Name>Heading</Name>
+        <ReferencedMemberName>Headings</ReferencedMemberName>
+      </AliasProperty>
+      <AliasProperty>
         <Name>Link</Name>
         <ReferencedMemberName>Links</ReferencedMemberName>
       </AliasProperty>
@@ -30,7 +34,160 @@
       <ScriptMethod>
         <Name>Sync</Name>
         <Script>
-                        $Markdown = $this.'#Markdown'
+                        $currentRows = @()
+$allMarkdown = @(:nextInput foreach ($md in $this.Input) {    
+    if ($md -isnot [string]) {
+        # If the markdown was a file
+        if ($md -is [IO.FileInfo] -and 
+            # and it had the extension .md or markdown
+            $md.Extension -in '.md', '.markdown') {
+            $md = Get-Content -LiteralPath $md.Fullname -Raw 
+            $md
+            continue
+        }
+        
+        if ($md -is [Management.Automation.CommandInfo]) {
+            $cmdHelp = if (
+                $md -is [Management.Automation.FunctionInfo] -or
+                $md -is [Management.Automation.AliasInfo]
+            ) {
+                Get-Help -Name $md.Name
+            } elseif ($md -is [Management.Automation.ExternalScriptInfo]) {
+                Get-Help -Name $md.Source
+            } else {
+                continue nextInput
+            }
+            if ($cmdHelp) {
+                $md = $cmdHelp                
+            }
+        }
+
+        if ($md.pstypenames -match 'HelpInfo') {
+            @(
+                if ($md.Name -match '[\\/]') {
+                    "# $(@($md.Name -split '[\\/]')[-1] -replace '\.ps1')"
+                } else {
+                    "# $($md.Name)"
+                }
+                
+                if ($md.Synopsis) {
+                    "## $($md.Synopsis)"
+                }                
+                $description = $md.Description.text -join [Environment]::NewLine
+                if ($description) {
+                    "### $($description)"
+                }
+                
+                $md.alertset.alert.text -join [Environment]::NewLine
+                
+                foreach ($example in $md.examples.example) {
+                    $exampleNumber++
+                    
+                    # Combine the code and remarks
+                    $exampleLines = 
+                        @(
+                            $example.Code
+                            foreach ($remark in $example.Remarks.text) {
+                                if (-not $remark) { continue }
+                                $remark
+                            }
+                        ) -join ([Environment]::NewLine) -split '(?&gt;\r\n|\n)' # and split into lines
+
+                    # Anything until the first non-comment line is a markdown predicate to the example
+                    $nonCommentLine = $false
+                    $markdownLines = @()
+
+                    # Go thru each line in the example as part of a loop
+                    $codeBlock = @(foreach ($exampleLine in $exampleLines) {
+                        # Any comments until the first uncommentedLine are markdown
+                        if ($exampleLine -match '^\#' -and -not $nonCommentLine) {
+                            $markdownLines += $exampleLine -replace '^\#' -replace '^\s+'
+                        } else {
+                            $nonCommentLine = $true
+                            $exampleLine
+                        }
+                    }) -join [Environment]::NewLine
+                    
+                    # Join all of our markdown lines together                        
+                    $markdownLines -join [Environment]::NewLine
+                    "~~~PowerShell"
+                    $codeBlock
+                    "~~~"
+                }
+            ) -join [Environment]::NewLine
+            continue nextInput
+        }        
+        if ($md -is [ScriptBlock]) {
+            "&lt;pre&gt;&lt;code class='language-powershell'&gt;$(
+                [Web.HttpUtility]::HtmlEncode(
+                    "$md"
+                )
+            )&lt;/code&gt;&lt;pre&gt;"
+            continue nextInput
+        } 
+        if ($md -is [Collections.IDictionary] -or 
+            ($md.GetType -and 
+                (-not $md.GetType().IsPrimitive)
+            )  
+        ) {            
+            $currentRows += $md            
+            continue
+        }        
+    }
+    
+    if ($currentRows) {    
+        $this.ToTable($currentRows)        
+        $currentRows = @()
+    }
+
+    if ($md -match '(?&gt;\.md|markdown)$' -and
+        (Test-Path $md -ErrorAction Ignore)
+    ) {
+        $md = Get-Content -Raw $md
+    }
+
+    $yamlheader = ''
+    if ($md -match '^---') {
+        $null, $yamlheader, $md = $in -split '---', 3
+        if ($yamlheader) {
+            $this | Add-Member NoteProperty '#YamlHeader' $yamlheader -Force
+        }
+    }
+
+    $md
+})
+
+if ($currentRows) {    
+    $allMarkdown += $this.ToTable($currentRows)
+    $currentRows = @()
+}
+
+$yamlHeaders = @()
+$allMarkdown = @(foreach ($md in $allMarkdown) {
+    if ($md -match '^---') {
+        $null, $yamlheader, $restOfMakdown = $md -split '---', 3
+        if ($yamlheader) {
+            $yamlHeaders+= $yamlheader            
+        }
+        $restOfMakdown
+    } else {
+        $md
+    }
+})
+
+if ($yamlHeaders) {
+    $yamlHeader = $yamlHeaders -join (
+        [Environment]::NewLine + '---' + [Environment]::NewLine
+    )
+    $this | Add-Member NoteProperty '#YamlHeader' $yamlHeader -Force
+}
+
+$markdown = $allMarkdown -join [Environment]::NewLine
+
+$this | 
+    Add-Member NoteProperty '#Markdown' $Markdown -Force
+
+$Markdown = $this.'#Markdown'
 
 if (-not $Markdown) { return }
 
@@ -49,7 +206,6 @@ $this |
 if (-not $this.'#XML') { return }
 
 $tables = $this.'#XML' | Select-Xml //table
-if (-not $tables) { return }
 filter innerText {
     $in = $_
     if ($in -is [string]) { "$in" }
@@ -143,7 +299,23 @@ $this | Add-Member NoteProperty '#DataSet' $markdownData -Force
       <ScriptMethod>
         <Name>ToString</Name>
         <Script>
-                        if (-not $this.XML.XHTML) { return '' }
+                        if ($args) {
+    $anyOutput = foreach ($arg in $args) {
+        $thisArg = $this.$arg
+        if ($thisArg) {
+            if ($thisArg.XHTML.InnerXML) {
+                "$($thisArg.XHTML.InnerXML)" + [Environment]::NewLine
+            } else {
+                "$thisArg"
+            }
+        }
+    }
+    if ($anyOutput) {
+        return $anyOutput -join [Environment]::NewLine
+    }    
+}
+
+if (-not $this.XML.XHTML) { return '' }
 return ("$($this.XML.XHTML.InnerXML)" + [Environment]::NewLine)
                     </Script>
       </ScriptMethod>
@@ -231,9 +403,109 @@ $markdownLines
                     </Script>
       </ScriptMethod>
       <ScriptProperty>
+        <Name>Code</Name>
+        <GetScriptBlock>
+                        &lt;#
+.SYNOPSIS
+    Gets code
+.DESCRIPTION
+    Gets code within Markdown / MarkX, grouped by language.
+.EXAMPLE
+    "
+    # Hello World in PowerShell
+    ~~~PowerShell
+    'Hello World'
+    ~~~
+    " | markx | Select-Object -ExpandProperty Code 
+#&gt;
+$codeByLanguage = [Ordered]@{}
+
+foreach ($element in $this.XML | Select-Xml -XPath //code) {
+    $language = 'unknown'
+    if ($element.node.class -match 'language-(?&lt;language&gt;\S+)?') {
+        $language = $matches.language        
+    }
+    if (-not $codeByLanguage[$language]) {
+        $codeByLanguage[$language] = @()
+    }
+    $codeByLanguage[$language] += $element.node.InnerText
+}
+
+return $codeByLanguage
+                    </GetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
+        <Name>CodeBlock</Name>
+        <GetScriptBlock>
+                        &lt;#
+.SYNOPSIS
+    Gets code blocks
+.DESCRIPTION
+    Gets code blocks within Markdown / MarkX
+.EXAMPLE
+    "
+    # Hello World in PowerShell
+    ~~~PowerShell
+    'Hello World'
+    ~~~
+    " | markx | Select-Object -ExpandProperty CodeBlock 
+#&gt;
+$codeByLanguage = [Ordered]@{}
+
+foreach ($element in $this.XML | Select-Xml -XPath //code) {
+    $language = 'unknown'
+    if ($element.node.class -match 'language-(?&lt;language&gt;\S+)?') {
+        $language = $matches.language        
+    }
+    if (-not $codeByLanguage[$language]) {
+        $codeByLanguage[$language] = @()
+    }
+    $codeByLanguage[$language] += $element.node
+}
+
+return $codeByLanguage
+                    </GetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
         <Name>DataSet</Name>
         <GetScriptBlock>
                         return $this.'#DataSet'
+                    </GetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
+        <Name>Header</Name>
+        <GetScriptBlock>
+                        if (-not $this.'#YamlHeader') { return }
+
+$convertFromYaml = $ExecutionContext.SessionState.InvokeCommand.GetCommand('ConvertFrom-Yaml', 'Alias,Cmdlet,Function')
+if (-not $convertFromYaml) {
+    Write-Warning "Cannot get header without ConvertFrom-Yaml"
+    return
+}
+
+return ($this.'#YamlHeader' | &amp; $convertFromYaml)
+                    </GetScriptBlock>
+        <SetScriptBlock>
+                        param($header)
+
+$this.YamlHeader = $header
+                    </SetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
+        <Name>Headings</Name>
+        <GetScriptBlock>
+                        &lt;#
+.SYNOPSIS
+    Gets Markdown headings
+.DESCRIPTION
+    Gets any heading elements in the markdown
+#&gt;
+$this.XML | 
+    Select-Xml -XPath //* |
+    Where-Object {
+        $_.Node.LocalName -match 'h[1-6]'
+    } |
+    Select-Object -ExpandProperty Node
                     </GetScriptBlock>
       </ScriptProperty>
       <ScriptProperty>
@@ -260,6 +532,113 @@ return ("$($this.XML.XHTML.InnerXML)" + [Environment]::NewLine)
                     </GetScriptBlock>
       </ScriptProperty>
       <ScriptProperty>
+        <Name>Input</Name>
+        <GetScriptBlock>
+                        return $this.'#input'
+                    </GetScriptBlock>
+        <SetScriptBlock>
+                        param(
+[PSObject[]]$InputObject
+)
+
+$this | Add-Member NoteProperty '#Input' $InputObject -Force
+
+$this.Sync()
+                    </SetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
+        <Name>Lexicon</Name>
+        <GetScriptBlock>
+                        &lt;#
+.SYNOPSIS
+    Gets Lexicons from Markdown 
+.DESCRIPTION
+    Gets At Protocol Lexicons defined in Markdown.
+
+    A lexicon table must have at least three columns:
+    
+    * Property
+    * Type
+    * Description
+
+    It must also contain a row containing the property `$type`.
+
+    This will be considered the lexicon's type.
+
+    Any bolded or italic fields will be considered required.
+
+    Lexicon tables may also be preceeded by an element containing the description.
+#&gt;
+
+$markdownData = $this.DataSet
+:nextTable foreach ($table in $markdownData.Tables) {
+    $isLexiconTable = $table.Columns['Property'] -and $table.Columns['Type'] -and $table.Columns['Description']
+
+    if (-not $isLexiconTable) { continue nextTable }
+
+    $hasType = $table.Select("Property='`$type'")
+    if (-not $hasType) {
+        Write-Warning "Missing `$type"
+        continue nextTable
+    }
+
+    $lexiconType = if ($hasType.Description -match '(?:[^\.\s]+\.){3}[^\.\s]+') {
+        $matches.0
+    }
+
+    if (-not $lexiconType) {
+        continue nextTable
+    }
+
+    $lexiconObject = [Ordered]@{
+        lexicon = 1
+        id = $lexiconType
+        defs = @{
+            main = [Ordered]@{
+                type = 'record'
+                description = 
+                    if ($table.ExtendedProperties.Description) {
+                        $table.ExtendedProperties.Description
+                    } else {
+                        $lexiconType
+                    }
+                required = @()
+                properties = [Ordered]@{}
+            }
+        }
+    }
+
+    foreach ($row in $table) {
+        
+        if ($row.Property -eq '$type') { continue }
+        $lexProp = [Ordered]@{}            
+        $lexProp.type =                 
+            switch -regex ($row.type) {
+                '\[\]' { 'array' }
+                'object' { 'object' }
+                'string' { 'string' }
+                'bool|switch' { 'boolean' }
+                'int|number|float|double' { 'number' }
+                'date' { 'datetime' }
+                'ur[il]' { 'uri'}
+            }
+            
+        $lexProp.description = $row.Description
+        if ($row.Property -match '\*') {
+            $lexiconObject.defs.main.required += $row.Property -replace '\*'
+        } 
+        elseif ($row.tr.td.outerxml -match '&lt;(?&gt;b|i|strong)&gt;') {
+            $lexiconObject.defs.main.required += $row.Property -replace '\*'
+        }
+        
+        $lexiconObject.defs.main.properties[$row.Property -replace '\*'] = $lexProp
+    }
+
+    $lexiconObject        
+}
+                    </GetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
         <Name>Links</Name>
         <GetScriptBlock>
                         foreach ($aNode in $this.XML | Select-Xml //a) {
@@ -279,53 +658,8 @@ return ("$($this.XML.XHTML.InnerXML)" + [Environment]::NewLine)
 [PSObject[]]$Markdown
 )
 
-$currentRows = @()
-$allMarkdown = @(foreach ($md in $Markdown) {    
-    if ($md -isnot [string]) {        
-        if ($md -is [ScriptBlock]) {
-            $md = "&lt;pre&gt;&lt;code class='language-powershell'&gt;$(
-                [Web.HttpUtility]::HtmlEncode(
-                    "$md"
-                )
-            )&lt;/code&gt;&lt;pre&gt;"
-        } 
-        if ($md -is [Collections.IDictionary] -or 
-            ($md.GetType -and -not $md.GetType().IsPrimitive))  {            
-            $currentRows += $md            
-            continue
-        }
-    }
-    
-    if ($currentRows) {    
-        $this.ToTable($currentRows)        
-        $currentRows = @()
-    }
+$this.Input = $Markdown
 
-    if ($md -match '(?&gt;\.md|markdown)$' -and
-        (Test-Path $md -ErrorAction Ignore)
-    ) {
-        $md = Get-Content -Raw $md
-    }
-
-    $yamlheader = ''
-    if ($md -match '^---') {
-        $null, $yamlheader, $md = $in -split '---', 3
-    }
-
-    $md
-})
-
-if ($currentRows) {    
-    $allMarkdown += $this.ToTable($currentRows)
-    $currentRows = @()
-}
-
-$markdown = $allMarkdown -join [Environment]::NewLine
-
-$this | 
-    Add-Member NoteProperty '#Markdown' $Markdown -Force
-
-$this.Sync()
                     </SetScriptBlock>
       </ScriptProperty>
       <ScriptProperty>
@@ -339,6 +673,38 @@ $this.Sync()
         <GetScriptBlock>
                         return $this.'#XMl'
                     </GetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
+        <Name>YamlHeader</Name>
+        <GetScriptBlock>
+                        return $this.'#YamlHeader'
+                    </GetScriptBlock>
+        <SetScriptBlock>
+                        param($header)
+
+if ($header -is [string]) {
+    $this | Add-Member NoteProperty '#YamlHeader' $header -Force
+    return
+}
+
+$convertToYaml = $ExecutionContext.SessionState.InvokeCommand.GetCommand('ConvertTo-Yaml', 'Alias,Cmdlet,Function')
+if (-not $convertToYaml) {
+    Write-Warning "Cannot set yaml header without converter"
+    return
+}
+
+$convertParameters = @{}
+if ($convertToYaml.Parameters['Depth']) {
+    $convertParameters['Depth'] = $FormatEnumerationLimit
+}
+$toYaml = $header | &amp; $convertToYaml @convertParameters
+if ($toYaml -is [string]) {
+    $this | Add-Member NoteProperty '#YamlHeader' $toYaml -Force
+}
+
+
+
+                    </SetScriptBlock>
       </ScriptProperty>
       <NoteProperty>
         <Name>DefaultDisplay</Name>
